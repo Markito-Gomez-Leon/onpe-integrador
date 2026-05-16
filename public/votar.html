@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cédula de Sufragio - ONPE</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            min-height: 100vh;
+            background-image: url('fondo-votar.jpg'); 
+            background-size: cover; 
+            background-position: center; 
+            background-attachment: fixed;
+        }
+        .header { background-color: #005088; color: white; padding: 20px; border-radius: 8px; width: 100%; max-width: 600px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header h2 { margin: 0; font-size: 24px; }
+        .header p { margin: 5px 0 0 0; font-size: 14px; opacity: 0.9; }
+        
+        .grid-cedula { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 600px; }
+        
+        .tarjeta-partido { background: white; border: 2px solid #cbd5e1; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .tarjeta-partido:hover { border-color: #005088; background-color: #f0f7ff; }
+        .simbolo { width: 60px; height: 60px; border-radius: 50%; display: inline-flex; justify-content: center; align-items: center; color: white; font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+        
+        .bg-rojo { background-color: #d32f2f; }
+        .bg-naranja { background-color: #f57c00; }
+        .bg-azul { background-color: #1976d2; }
+        .bg-verde { background-color: #388e3c; }
+
+        .nombre-partido { font-weight: bold; color: #333; font-size: 16px; }
+        
+        #mensaje-confirmacion { margin-top: 20px; padding: 15px; border-radius: 5px; width: 100%; max-width: 600px; text-align: center; font-weight: bold; display: none; }
+        .alerta-exito { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h2>ELECCIONES PRESIDENCIALES</h2>
+        <p>Seleccione el símbolo de su preferencia</p>
+    </div>
+
+    <div class="grid-cedula" id="cedula">
+        <div class="tarjeta-partido" onclick="emitirVoto(1, 'Partido Integridad')">
+            <div class="simbolo bg-rojo">I</div>
+            <div class="nombre-partido">Partido Integridad</div>
+        </div>
+        
+        <div class="tarjeta-partido" onclick="emitirVoto(2, 'Fuerza Innovadora')">
+            <div class="simbolo bg-naranja">F</div>
+            <div class="nombre-partido">Fuerza Innovadora</div>
+        </div>
+
+        <div class="tarjeta-partido" onclick="emitirVoto(3, 'Alianza Digital')">
+            <div class="simbolo bg-azul">A</div>
+            <div class="nombre-partido">Alianza Digital</div>
+        </div>
+
+        <div class="tarjeta-partido" onclick="emitirVoto(4, 'Unión Verde')">
+            <div class="simbolo bg-verde">V</div>
+            <div class="nombre-partido">Unión Verde</div>
+        </div>
+    </div>
+
+    <div id="mensaje-confirmacion"></div>
+
+    <script>
+        // 1. Apenas carga la página, recuperamos el DNI del elector
+        const dniRecuperado = localStorage.getItem('dniElector');
+
+        // 2. Seguridad: Si alguien intenta entrar directo a votar.html sin loguearse, lo botamos
+        if (!dniRecuperado) {
+            alert("Acceso denegado. Primero debe validar su identidad.");
+            window.location.href = 'index.html';
+        }
+
+        function emitirVoto(idPartido, nombrePartido) {
+            const confirmacion = confirm(`¿Está seguro de emitir su voto por el ${nombrePartido}? Esta acción es irreversible.`);
+            
+            if (confirmacion) {
+                // 3. Usamos el DNI real que vino del Login
+                const datosVoto = {
+                    dni: dniRecuperado, 
+                    idPartido: idPartido
+                };
+
+                fetch('http://localhost:3000/emitir-voto', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(datosVoto)
+                })
+                .then(respuesta => respuesta.json())
+                .then(datos => {
+                    if(datos.exito) {
+                        document.getElementById('cedula').style.display = 'none';
+                        const msj = document.getElementById('mensaje-confirmacion');
+                        msj.style.display = 'block';
+                        msj.className = 'alerta-exito';
+                        msj.innerHTML = '✅ ' + datos.mensaje;
+                        
+                        // 4. Limpiamos la memoria para que no quede el DNI guardado
+                        localStorage.removeItem('dniElector');
+                    } else {
+                        alert(datos.mensaje); 
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>

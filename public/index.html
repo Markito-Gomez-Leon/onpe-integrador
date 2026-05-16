@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sufragio Digital - Login</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            background-image: url('fondo-login.jpg'); 
+            background-size: cover; 
+            background-position: center; 
+            background-attachment: fixed; 
+        }
+        .login-box { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; width: 300px; }
+        input { width: 90%; padding: 10px; margin: 15px 0; border: 1px solid #ccc; border-radius: 4px; }
+        button { background: #d32f2f; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; }
+        button:hover { background: #b71c1c; }
+        #resultado { margin-top: 15px; font-weight: bold; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div class="login-box">
+        <h2>ONPE - Ingreso</h2>
+        <p>Ingrese su DNI para sufragar</p>
+        <input type="text" id="dniInput" placeholder="Número de DNI" maxlength="8">
+        <button onclick="validarDNI()">Validar Identidad</button>
+        <div id="resultado"></div>
+    </div>
+
+    <script>
+        function validarDNI() {
+            const dni = document.getElementById('dniInput').value.trim(); // .trim() quita espacios vacíos
+            const resultadoDiv = document.getElementById('resultado');
+            
+            // 🛑 VALIDACIÓN 1: Campo Vacío
+            if (dni === '') {
+                resultadoDiv.innerHTML = "⚠️ Por favor, ingrese un número de DNI.";
+                resultadoDiv.style.color = "#f57c00"; // Naranja de advertencia
+                return; // Detiene la ejecución aquí, no llama al backend
+            }
+
+            // 🛑 VALIDACIÓN 2: Tamaño y Formato (Solo 8 números)
+            const regexNumeros = /^[0-9]{8}$/;
+            if (!regexNumeros.test(dni)) {
+                resultadoDiv.innerHTML = "❌ El DNI debe contener exactamente 8 números.";
+                resultadoDiv.style.color = "red";
+                return; // Detiene la ejecución
+            }
+
+            // Si pasa los escudos, ahora sí contactamos al servidor
+            resultadoDiv.innerHTML = "Validando identidad en la ONPE...";
+            resultadoDiv.style.color = "#005088";
+
+            // Enviamos el dato al Backend (Tu fetch original)
+            fetch('http://localhost:3000/validar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ dni: dni })
+            })
+            .then(respuesta => respuesta.json())
+            .then(datos => {
+                if (datos.exito) {
+                    // 1. Guardamos el DNI en la memoria del navegador
+                    localStorage.setItem('dniElector', dni);
+                    
+                    // 2. Redirigimos automáticamente a la cabina de votación
+                    window.location.href = 'votar.html'; 
+                } else {
+                    resultadoDiv.innerHTML = datos.mensaje;
+                    resultadoDiv.style.color = "red";
+                }
+            })
+            .catch(error => {
+                resultadoDiv.innerHTML = "Error de conexión con el servidor.";
+                resultadoDiv.style.color = "red";
+            });
+        }
+    </script>
+</body>
+</html>

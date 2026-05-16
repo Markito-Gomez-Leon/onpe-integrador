@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escrutinio - Resultados ONPE</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 40px 20px; 
+            margin: 0; 
+            min-height: 100vh;
+            background-image: url('fondo-resultados.jpg'); 
+            background-size: cover; 
+            background-position: center; 
+            background-attachment: fixed;
+        }
+        .dashboard { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
+        .header { text-align: center; border-bottom: 2px solid #005088; padding-bottom: 15px; margin-bottom: 20px; }
+        .header h2 { color: #005088; margin: 0; }
+        
+        .partido-fila { margin-bottom: 20px; }
+        .partido-info { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 5px; color: #333; }
+        
+        .barra-fondo { width: 100%; background-color: #e2e8f0; border-radius: 4px; overflow: hidden; height: 20px; }
+        .barra-llena { background-color: #d32f2f; height: 100%; width: 0%; transition: width 1s ease-in-out; }
+        
+        .boton-recargar { background: #005088; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 20px; }
+        .boton-recargar:hover { background: #003d66; }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard">
+        <div class="header">
+            <h2>📊 Resultados en Tiempo Real</h2>
+            <p>Conteo oficial de votos procesados</p>
+        </div>
+
+        <div id="lista-resultados">
+            <p style="text-align:center;">Cargando escrutinio...</p>
+        </div>
+
+        <button class="boton-recargar" onclick="cargarResultados()">🔄 Actualizar Resultados</button>
+    </div>
+
+    <script>
+        function cargarResultados() {
+            const contenedor = document.getElementById('lista-resultados');
+            
+            fetch('http://localhost:3000/resultados')
+            .then(respuesta => respuesta.json())
+            .then(datos => {
+                contenedor.innerHTML = ''; // Limpiamos el texto de "Cargando"
+                
+                // Calculamos el total de votos para sacar los porcentajes de la barra
+                let totalVotos = 0;
+                datos.forEach(partido => { totalVotos += partido.votos; });
+
+                if (totalVotos === 0) {
+                    contenedor.innerHTML = '<p style="text-align:center; color:#666;">Aún no hay votos registrados en el sistema.</p>';
+                    return;
+                }
+
+                // Dibujamos cada partido
+                datos.forEach(partido => {
+                    let porcentaje = ((partido.votos / totalVotos) * 100).toFixed(1);
+                    
+                    const htmlFila = `
+                        <div class="partido-fila">
+                            <div class="partido-info">
+                                <span>${partido.nombre}</span>
+                                <span>${partido.votos} votos (${porcentaje}%)</span>
+                            </div>
+                            <div class="barra-fondo">
+                                <div class="barra-llena" style="width: ${porcentaje}%;"></div>
+                            </div>
+                        </div>
+                    `;
+                    contenedor.innerHTML += htmlFila;
+                });
+            })
+            .catch(error => {
+                contenedor.innerHTML = '<p style="color:red; text-align:center;">Error al conectar con el servidor.</p>';
+            });
+        }
+
+        // Cargar los datos automáticamente al abrir la página
+        cargarResultados();
+    </script>
+</body>
+</html>
