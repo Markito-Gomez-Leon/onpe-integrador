@@ -19,23 +19,46 @@ db.connect(err => {
     console.log('✅ Base de datos conectada con éxito.');
 });
 
-// API: Validar Elector (HU-01)
+// API: Validar Elector Multifactor (HU-01 Reforzada)
 app.post('/validar', (req, res) => {
-    const dniIngresado = req.body.dni;
+    // 1. Recibimos TODOS los datos de seguridad que manda el frontend
+    const { dni, nombre, apellido, fecha_emision, digito_verificador } = req.body;
+
+    // --- INICIO HU-05: Restricción de Horario Electoral ---
+    const horaActual = new Date().getHours(); 
     
-    // Consulta SQL parametrizada (Seguridad Fase 4)
-    db.query("SELECT * FROM padron WHERE dni = ?", [dniIngresado], (err, result) => {
-        if (err) return res.status(500).send("Error en la BD");
+    if (horaActual < 8 || horaActual >= 23) {
+        return res.json({ 
+            exito: false, 
+            mensaje: "⚠️ El horario de votación es de 8:00 AM a 4:00 PM. Las urnas se encuentran cerradas." 
+        });
+    }
+    // --- FIN HU-05 ---
+    
+    // 2. Consulta SQL estricta (Cruza los 5 factores)
+    const sql = `
+        SELECT * FROM padron 
+        WHERE dni = ? AND nombre = ? AND apellido = ? AND fecha_emision = ? AND digito_verificador = ?
+    `;
+    
+    db.query(sql, [dni, nombre, apellido, fecha_emision, digito_verificador], (err, result) => {
+        if (err) return res.status(500).json({ exito: false, mensaje: "Error en la BD" });
         
-        if (result.length > 0) {
-            const ciudadano = result[0];
-            if (ciudadano.estado === 'YA_VOTO') {
-                res.json({ exito: false, mensaje: "⚠️ Acceso denegado: Este DNI ya emitió su voto." });
-            } else {
-                res.json({ exito: true, mensaje: `✅ Bienvenido, ${ciudadano.nombre}. Puede pasar a la cabina.` });
-            }
+        // 3. Si no hay coincidencia exacta de los 5 datos, se bloquea (Evita suplantación)
+        if (result.length === 0) {
+            return res.json({ 
+                exito: false, 
+                mensaje: "❌ Datos de identidad incorrectos. Acceso denegado por seguridad." 
+            });
+        }
+
+        const ciudadano = result[0];
+        
+        // 4. Validamos que el elector no sea un "voto golondrino" o duplicado (HU-06)
+        if (ciudadano.estado === 'YA_VOTO') {
+            res.json({ exito: false, mensaje: "⚠️ Acceso denegado: Este ciudadano ya emitió su voto." });
         } else {
-            res.json({ exito: false, mensaje: "❌ DNI no encontrado en el padrón." });
+            res.json({ exito: true, mensaje: `✅ Identidad confirmada. Bienvenido, ${ciudadano.nombre}. Aperturando cabina...` });
         }
     });
 });

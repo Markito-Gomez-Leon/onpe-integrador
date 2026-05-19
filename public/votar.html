@@ -29,6 +29,7 @@
         .simbolo { width: 60px; height: 60px; border-radius: 50%; display: inline-flex; justify-content: center; align-items: center; color: white; font-size: 24px; font-weight: bold; margin-bottom: 10px; }
         
         .bg-rojo { background-color: #d32f2f; }
+        .bg-gris { background-color: #94a3b8; }
         .bg-naranja { background-color: #f57c00; }
         .bg-azul { background-color: #1976d2; }
         .bg-verde { background-color: #388e3c; }
@@ -37,6 +38,50 @@
         
         #mensaje-confirmacion { margin-top: 20px; padding: 15px; border-radius: 5px; width: 100%; max-width: 600px; text-align: center; font-weight: bold; display: none; }
         .alerta-exito { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        
+        /* Configuración exclusiva para la impresión del PDF (HU-12) - Forzar 1 sola hoja */
+        @media print {
+            html, body { 
+                height: auto !important; 
+                min-height: 0 !important; 
+                margin: 0 !important; 
+                padding: 0 !important; 
+                background-image: none !important; 
+                background-color: white !important; 
+            }
+            
+            @page {
+                size: A4;
+                margin: 15mm 10mm; /* Define márgenes de página fijos y compactos */
+            }
+
+            .header { 
+                background-color: transparent !important; 
+                color: black !important; 
+                border-bottom: 2px solid black !important; 
+                box-shadow: none !important; 
+                margin-bottom: 15px !important;
+                padding: 10px !important;
+            }
+
+            /* Ocultamos por completo la cédula y los botones para que no ocupen espacio */
+            #btn-imprimir, .tarjeta-partido, .grid-cedula { 
+                display: none !important; 
+            }
+
+            /* Estilizamos el recibo para que actúe como un documento oficial e indivisible */
+            #mensaje-confirmacion { 
+                background-color: white !important; 
+                color: black !important; 
+                border: 2px dashed black !important; 
+                padding: 15px !important;
+                margin: 10px auto !important;
+                box-shadow: none !important;
+                display: block !important;
+                max-width: 100% !important;
+                page-break-inside: avoid; /* Evita estrictamente que el cuadro se fracture entre páginas */
+            }
+        }
     </style>
 </head>
 <body>
@@ -66,9 +111,19 @@
             <div class="simbolo bg-verde">V</div>
             <div class="nombre-partido">Unión Verde</div>
         </div>
+
+        <div class="tarjeta-partido" onclick="emitirVoto(5, 'Voto en Blanco')">
+            <div class="simbolo bg-gris">⬜</div>
+            <div class="nombre-partido">Voto en Blanco</div>
+        </div>
+        
     </div>
 
-    <div id="mensaje-confirmacion"></div>
+    </div> <div id="mensaje-confirmacion"></div>
+            
+    <button id="btn-imprimir" class="boton-recargar" style="display: none; background-color: #388e3c; margin-top: 15px;" onclick="window.print()">
+        🖨️ Descargar Constancia de Sufragio (PDF)
+    </button>
 
     <script>
         // 1. Apenas carga la página, recuperamos el DNI del elector
@@ -99,12 +154,27 @@
                 .then(datos => {
                     if(datos.exito) {
                         document.getElementById('cedula').style.display = 'none';
+                        
+                        // Capturamos fecha y hora actual
+                        const fechaActual = new Date().toLocaleString('es-PE');
+                        
+                        // Armamos el recibo oficial
                         const msj = document.getElementById('mensaje-confirmacion');
                         msj.style.display = 'block';
                         msj.className = 'alerta-exito';
-                        msj.innerHTML = '✅ ' + datos.mensaje;
+                        msj.innerHTML = `
+                            <h3>✅ Sufragio Exitoso</h3>
+                            <p>${datos.mensaje}</p>
+                            <hr style="border-top: 1px solid #c3e6cb;">
+                            <p align="left"><b>DNI del Elector:</b> ${dniRecuperado}</p>
+                            <p align="left"><b>Fecha y Hora:</b> ${fechaActual}</p>
+                            <p align="left"><b>Estado:</b> REGISTRADO EN ONPE</p>
+                        `;
                         
-                        // 4. Limpiamos la memoria para que no quede el DNI guardado
+                        // Mostramos el botón de imprimir
+                        document.getElementById('btn-imprimir').style.display = 'block';
+                        
+                        // Limpiamos la memoria
                         localStorage.removeItem('dniElector');
                     } else {
                         alert(datos.mensaje); 
