@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 19-06-2026 a las 08:00:23
+-- Tiempo de generación: 19-06-2026 a las 23:17:49
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -42,12 +42,12 @@ CREATE TABLE `candidatos` (
 --
 
 INSERT INTO `candidatos` (`id`, `categoria`, `nombre`, `partido`, `votos`, `foto_candidato`, `logo_partido`) VALUES
-(1, 'presidencial', 'Fórmula Presidencial FP', 'Fuerza Popular (FP)', 2857691, 'fp_cand.png', 'fp_logo.png'),
-(2, 'presidencial', 'Fórmula Presidencial JP', 'Juntos por el Perú (JP)', 1998595, 'jp_cand.png', 'jp_logo.png'),
-(3, 'presidencial', 'Fórmula Presidencial RP', 'Renovación Popular (RP)', 1982868, 'rp_cand.png', 'rp_logo.png'),
-(4, 'presidencial', 'Fórmula Presidencial AN', 'Ahora Nación (AN)', 1320400, 'an_cand.png', 'an_logo.png'),
-(5, 'presidencial', 'Fórmula Presidencial APP', 'Alianza Para el Progreso (APP)', 1120500, 'app_cand.png', 'app_logo.png'),
-(6, 'presidencial', 'Fórmula Presidencial AP', 'Avanza País (AP)', 980350, 'ap_cand.png', 'ap_logo.png'),
+(1, 'presidencial', ' KEIKO FUJIMORI FP', 'Fuerza Popular (FP)', 2857691, 'fp_cand.png', 'fp_logo.png'),
+(2, 'presidencial', 'ROBERTO SANCHEZ JP', 'Juntos por el Perú (JP)', 1998595, 'jp_cand.png', 'jp_logo.png'),
+(3, 'presidencial', 'RAPHAEL LOPEZ RP', 'Renovación Popular (RP)', 1982868, 'rp_cand.png', 'rp_logo.png'),
+(4, 'presidencial', 'LOPEZ CHAO AN', 'Ahora Nación (AN)', 1320400, 'an_cand.png', 'an_logo.png'),
+(5, 'presidencial', 'CESAR ACUÑA APP', 'Alianza Para el Progreso (APP)', 1120500, 'app_cand.png', 'app_logo.png'),
+(6, 'presidencial', 'JOSE WILLIAMS AP', 'Avanza País (AP)', 980350, 'ap_cand.png', 'ap_logo.png'),
 (7, 'senado', 'Francisco Calisto Giampietri', 'Renovación Popular (RP)', 850401, 'default_candidato.png', 'default_logo.png'),
 (8, 'senado', 'Marco Miyashiro Arashiro', 'Fuerza Popular (FP)', 810200, 'default_candidato.png', 'default_logo.png'),
 (9, 'senado', 'Daniel Barragán Coloma', 'Unión por el Perú (UPP)', 750000, 'default_candidato.png', 'default_logo.png'),

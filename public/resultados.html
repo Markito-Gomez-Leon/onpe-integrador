@@ -5,13 +5,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Escrutinio Oficial - ONPE</title>
     <style>
-        /* Estilo miniatura para Dashboard */
+        /* =========================================================
+           SISTEMA DE DISEÑO DEL DASHBOARD (UI/UX)
+           Aquí definimos los estilos para una interfaz gerencial y pública.
+           Se busca claridad visual para la lectura de datos estadísticos.
+           ========================================================= */
+
+        /* Selector de Categorías (Filtro) */
+        .select-categoria {
+            padding: 10px 15px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            outline: none;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Botón Corporativo de Exportación a Excel
+           Se utiliza el color verde institucional (#1D6F42) reconocido universalmente
+           para hojas de cálculo, mejorando la intuición del usuario. */
+        .btn-excel {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: #1D6F42; 
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-decoration: none;
+        }
+
+        .btn-excel:hover {
+            background-color: #155331; 
+        }
+
+        .btn-excel:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Miniaturas de Perfil (Fórmula Presidencial) */
         .info-agrupada { display: flex; align-items: center; }
         .perfil-resultado {
             width: 45px; height: 45px; border-radius: 50%;
             object-fit: cover; margin-right: 15px; border: 2px solid #e2e8f0;
         }
-        /* Nuevos estilos para los Ganadores */
+
+        /* ALERTAS DE CIERRE DE URNAS (Ganadores)
+           Cuando el servidor indica que la elección cerró, el sistema inyecta estas clases 
+           para resaltar en color verde de éxito (#166534) a los virtuales ganadores. 
+        */
         .tarjeta-ganador {
             border: 2px solid #166534 !important;
             background-color: #f0fdf4 !important;
@@ -31,6 +81,8 @@
             margin-left: 10px;
             vertical-align: middle;
         }
+
+        /* Variables base y estructura principal Glassmorphism */
         :root {
             --azul-onpe: #003B70;
             --rojo-peru: #D32F2F;
@@ -72,6 +124,12 @@
 
         .header-dash h2 { color: var(--azul-onpe); margin: 0; }
         
+        .botones-superiores {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
         .btn-back {
             background-color: transparent;
             color: #666;
@@ -117,7 +175,7 @@
         
         select:focus { border-color: var(--azul-onpe); }
 
-        /* Estilos de las barras y tarjetas */
+        /* Gráficas Estadísticas (Barras de Progreso) */
         .partido-fila { 
             margin-bottom: 20px; 
             background: white; 
@@ -150,10 +208,19 @@
                 <h2>📊 Escrutinio Oficial</h2>
                 <span style="color: #666; font-size: 14px;">Avance de resultados a nivel nacional</span>
             </div>
-            <a href="/" class="btn-back">⬅ Volver al Login</a>
+            
+            <div class="botones-superiores">
+                <button id="btnExportarExcel" class="btn-excel" onclick="exportarAExcel()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M5.884 6.68a.5.5 0 1 0-.768.64L7.349 10l-2.233 2.68a.5.5 0 0 0 .768.64L8 10.781l2.116 2.539a.5.5 0 0 0 .768-.64L8.651 10l2.233-2.68a.5.5 0 0 0-.768-.64L8 9.219l-2.116-2.54z"/>
+                        <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+                    </svg>
+                    Exportar Excel
+                </button>
+                <a href="/" class="btn-back">⬅ Volver al Login</a>
+            </div>
         </div>
 
-        <!-- Nuevo Menú Desplegable -->
         <div class="filtro-container">
             <label for="categoriaSelect">Seleccione la Elección:</label>
             <select id="categoriaSelect" onchange="cargarResultados()">
@@ -169,7 +236,77 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
     <script>
+        // =========================================================
+        // MÓDULO DE EXPORTACIÓN A EXCEL (DATA SCRAPING)
+        // Extrae los datos visuales directamente del DOM para garantizar que 
+        // el archivo descargado contenga exactamente los porcentajes y sumatorias 
+        // que el usuario está viendo en pantalla (Consistencia de Presentación).
+        // =========================================================
+        function exportarAExcel() {
+            const select = document.getElementById("categoriaSelect");
+            const categoriaSeleccionada = select.options[select.selectedIndex].text;
+            
+            // Reemplaza espacios por guiones bajos para tener un nombre de archivo limpio (ej. reporte_senado.xlsx)
+            const sufijoArchivo = categoriaSeleccionada.toLowerCase().replace(/\s+/g, '_');
+            const nombreArchivo = `reporte_${sufijoArchivo}.xlsx`;
+
+            // Estructuramos la cabecera del archivo de cálculo
+            const datosParaExcel = [
+                ["Candidato", "Partido Político", "Votos Obtenidos", "Porcentaje (%)"]
+            ];
+
+            const tarjetas = document.querySelectorAll("#lista-resultados .partido-fila"); 
+
+            if(tarjetas.length === 0) {
+                alert("No hay datos para exportar en esta categoría.");
+                return;
+            }
+
+            // Recorremos el HTML renderizado para extraer la data fila por fila
+            tarjetas.forEach(tarjeta => {
+                let elementoCandidato = tarjeta.querySelector(".candidato-nombre");
+                let elementosPartido = tarjeta.querySelectorAll(".partido-nombre"); 
+                let elementoPorcentaje = tarjeta.querySelector("div[style='text-align: right;'] b");
+
+                if (elementoCandidato && elementosPartido.length >= 2) {
+                    // LIMPIEZA DE DATOS (REGEX): Eliminamos las etiquetas visuales de "VIRTUAL GANADOR" 
+                    // para que en el Excel solo aparezca el nombre limpio del candidato.
+                    let candidato = elementoCandidato.innerText.replace(/PASA A 2DA VUELTA|VIRTUAL GANADOR/g, '').trim();
+                    let partido = elementosPartido[0].innerText.trim();
+                    
+                    // PARSEO NUMÉRICO: Eliminamos las comas (ej. 1,000 -> 1000) y lo convertimos a entero puro.
+                    // Esto permite que el Excel reconozca el campo como "Número" y no como "Texto",
+                    // permitiendo a los auditores usar fórmulas matemáticas como =SUMA() en el archivo final.
+                    let votos = parseInt(elementosPartido[1].innerText.replace(/\D/g, '')) || 0;
+                    
+                    let porcentaje = elementoPorcentaje ? elementoPorcentaje.innerText.trim() : "0%";
+
+                    datosParaExcel.push([candidato, partido, votos, porcentaje]);
+                }
+            });
+
+            // Usamos la API de SheetJS para compilar la matriz en un archivo descargable
+            const worksheet = XLSX.utils.aoa_to_sheet(datosParaExcel);
+            const workbook = XLSX.utils.book_new();
+            
+            // Ajuste estético del ancho de las celdas en el Excel generado
+            worksheet['!cols'] = [
+                { wch: 35 }, { wch: 30 }, { wch: 15 }, { wch: 15 }
+            ];
+
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Resultados");
+            XLSX.writeFile(workbook, nombreArchivo);
+        }
+
+
+        // =========================================================
+        // MOTOR DE ESTADÍSTICA (FETCH & RENDER)
+        // Consulta la base de datos según la categoría seleccionada,
+        // calcula el 100% matemático y dibuja las barras de progreso.
+        // =========================================================
         async function cargarResultados() {
             const contenedor = document.getElementById('lista-resultados');
             const categoriaSeleccionada = document.getElementById('categoriaSelect').value;
@@ -177,12 +314,15 @@
             contenedor.innerHTML = '<p style="text-align:center; color:#666;">Calculando resultados oficiales...</p>';
 
             try {
+                // Petición al Controlador (Backend) enviando el filtro por URL (?categoria=)
                 const respuesta = await fetch(`/api/resultados?categoria=${categoriaSeleccionada}`);
                 const datosServidor = await respuesta.json();
                 
                 contenedor.innerHTML = ''; 
                 
-                // Efecto de Títulos si la elección cerró
+                // CONTROL DE ESTADO DE LA ELECCIÓN
+                // Si el backend envía la bandera 'eleccionCerrada' como true (son más de las 4 PM),
+                // transformamos los títulos de azules a rojos/verdes para anunciar los resultados finales.
                 if (datosServidor.eleccionCerrada) {
                     document.querySelector('.header-dash h2').innerHTML = "🚨 RESULTADOS FINALES";
                     document.querySelector('.header-dash h2').style.color = "#166534";
@@ -194,6 +334,9 @@
                 }
 
                 const datos = datosServidor.escrutinio;
+                
+                // CÁLCULO DEL UNIVERSO DE VOTOS
+                // Sumamos todos los votos de la categoría actual para saber a cuánto equivale el 100%.
                 let totalVotos = datos.reduce((acc, candidato) => acc + candidato.votos, 0);
 
                 if (totalVotos === 0) {
@@ -201,30 +344,36 @@
                     return;
                 }
 
-               // Dibujamos a TODOS los candidatos
-               datos.forEach((candidato, index) => {
+                // RENDERIZADO DINÁMICO DE LOS CANDIDATOS
+                datos.forEach((candidato, index) => {
+                    // Cálculo del peso porcentual de este candidato en específico
                     let porcentaje = ((candidato.votos / totalVotos) * 100).toFixed(2);
+                    
                     let claseVerde = '';
                     let etiquetaVerde = '';
 
-                    // Lógica de ganadores (Verde)
+                    // LÓGICA DE NEGOCIO: RECONOCIMIENTO DE GANADORES
+                    // Si ya cerró la elección, identificamos al ganador usando el índice (index) del array,
+                    // ya que el Backend envía los datos ordenados de mayor a menor (ORDER BY votos DESC).
                     if (datosServidor.eleccionCerrada) {
                         if (categoriaSeleccionada === 'presidencial' && index < 2) {
+                            // En presidencia, los 2 primeros puestos pasan a Balotaje (Segunda Vuelta)
                             claseVerde = 'tarjeta-ganador';
                             etiquetaVerde = '<span class="etiqueta-ganador">PASA A 2DA VUELTA</span>';
                         } else if (categoriaSeleccionada !== 'presidencial' && index === 0) {
+                            // En el congreso/senado, resaltamos al líder absoluto
                             claseVerde = 'tarjeta-ganador';
                             etiquetaVerde = '<span class="etiqueta-ganador">VIRTUAL GANADOR</span>';
                         }
                     }
 
-                    // Lógica de Imagen (Solo presidencial y evitar Voto en Blanco)
+                    // FOTO DE PERFIL (Solo para presidenciales)
                     let imagenHTML = '';
                     if (categoriaSeleccionada === 'presidencial' && candidato.nombre !== 'Voto en Blanco') {
-                        // Le agregamos la ruta imagenes/ al inicio
                         imagenHTML = `<img src="imagenes/${candidato.foto_candidato}" class="perfil-resultado" onerror="this.style.display='none'">`;
                     }
                     
+                    // Inyección de HTML (Template Strings) creando las barras proporcionales
                     const htmlFila = `
                         <div class="partido-fila ${claseVerde}">
                             <div class="partido-info">
@@ -254,6 +403,7 @@
             }
         }
 
+        // Ejecutar inmediatamente al abrir la pantalla para cargar la data por defecto
         cargarResultados();
     </script>
 </body>

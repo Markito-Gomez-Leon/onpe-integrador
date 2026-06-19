@@ -5,7 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ONPE - Portal del Elector</title>
     <style>
-        /* Estilos Base y Variables Institucionales */
+        /* =========================================================
+           SISTEMA DE DISEÑO (UI) - BRANDING INSTITUCIONAL
+           Se definen los colores oficiales (ONPE) y las variables globales.
+           El objetivo es brindar confianza y formalidad al elector.
+           ========================================================= */
         :root {
             --azul-onpe: #003B70;
             --rojo-peru: #D32F2F;
@@ -26,7 +30,10 @@
             background-attachment: fixed;
         }
 
-        /* Tarjeta Glassmorphism */
+        /* TARJETA DE AUTENTICACIÓN (Efecto Glassmorphism)
+           Se usa un fondo translúcido con desenfoque (backdrop-filter) para modernizar 
+           la interfaz sin perder la legibilidad del formulario.
+        */
         .login-card {
             background: var(--blanco-translucido);
             backdrop-filter: blur(10px);
@@ -51,7 +58,7 @@
             margin-bottom: 25px;
         }
 
-        /* Formulario */
+        /* Controles del Formulario */
         input {
             width: 100%;
             padding: 12px;
@@ -69,7 +76,7 @@
             box-shadow: 0 0 5px rgba(0, 59, 112, 0.2);
         }
 
-        /* Botones */
+        /* Botón de Acción Principal (Votar) */
         .btn-primary {
             background-color: var(--rojo-peru);
             color: white;
@@ -88,6 +95,7 @@
             background-color: #b71c1c;
         }
 
+        /* Botón de Acción Secundaria (Resultados Públicos) */
         .btn-secondary {
             display: inline-block;
             background-color: transparent;
@@ -138,16 +146,27 @@
     </div>
 
     <script>
+        // =========================================================
+        // LÓGICA FRONTEND: VALIDACIÓN DE IDENTIDAD Y CONTROL DE SESIÓN
+        // =========================================================
         async function validarIdentidad() {
+            
+            // 1. RECOLECCIÓN Y FORMATEO DE DATOS
+            // Obtenemos los valores ingresados. En el caso de la fecha, el input type="date"
+            // devuelve YYYY-MM-DD, pero el padrón de la Base de Datos requiere el formato peruano
+            // DD/MM/AAAA. Aquí interceptamos ese dato y lo volteamos matemáticamente.
             const nombre = document.getElementById('nombreInput').value.trim();
             const apellido = document.getElementById('apellidoInput').value.trim();
             const dni = document.getElementById('dniInput').value.trim();
-            const fechaRaw = document.getElementById('fechaInput').value; // Sale como YYYY-MM-DD
+            const fechaRaw = document.getElementById('fechaInput').value; 
             const partes = fechaRaw.split('-');
-            const fecha_emision = partes.length === 3 ? `${partes[2]}/${partes[1]}/${partes[0]}` : ''; // Lo voltea a DD/MM/AAAA
+            const fecha_emision = partes.length === 3 ? `${partes[2]}/${partes[1]}/${partes[0]}` : ''; 
             const digito_verificador = document.getElementById('digitoInput').value.trim();
             const resultadoDiv = document.getElementById('resultadoDiv');
 
+            // 2. VALIDACIÓN DE CAMPOS VACÍOS (Filtro Frontend)
+            // Evitamos enviar consultas inútiles al servidor si faltan datos, 
+            // ahorrando tráfico y recursos computacionales.
             if (!nombre || !apellido || !dni || !fecha_emision || !digito_verificador) {
                 resultadoDiv.innerHTML = "⚠️ Por favor, complete todos los campos.";
                 resultadoDiv.style.color = "#f57c00";
@@ -155,7 +174,9 @@
             }
 
             try {
-                // Aquí el frontend (Vista) llama al Controlador (server.js)
+                // 3. COMUNICACIÓN CON EL BACKEND (Controlador MVC)
+                // Usamos fetch() para enviar los datos de forma asíncrona (sin recargar la página)
+                // hacia la ruta /api/login, donde el servidor cruzará la info con la Base de Datos.
                 const respuesta = await fetch('/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -164,12 +185,18 @@
 
                 const datos = await respuesta.json();
 
+                // 4. MANEJO DE LA RESPUESTA Y CREACIÓN DE SESIÓN (State Management)
                 if (datos.exito) {
                     resultadoDiv.innerHTML = `✅ ${datos.mensaje}`;
                     resultadoDiv.style.color = "green";
+                    
+                    // Si el elector es válido y aún no ha votado, guardamos su DNI en el 
+                    // almacenamiento local (localStorage) del navegador. Esto actuará como un "pase" 
+                    // o "token de sesión" para dejarlo entrar a la cabina de votación.
                     localStorage.setItem('dniElector', dni);
                     setTimeout(() => window.location.href = '/votar', 1500);
                 } else {
+                    // El servidor nos rechazó (ya votó, datos falsos, o fuera de horario)
                     resultadoDiv.innerHTML = `❌ ${datos.mensaje}`;
                     resultadoDiv.style.color = "red";
                 }
