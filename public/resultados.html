@@ -5,6 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Escrutinio Oficial - ONPE</title>
     <style>
+        /* Estilo miniatura para Dashboard */
+        .info-agrupada { display: flex; align-items: center; }
+        .perfil-resultado {
+            width: 45px; height: 45px; border-radius: 50%;
+            object-fit: cover; margin-right: 15px; border: 2px solid #e2e8f0;
+        }
+        /* Nuevos estilos para los Ganadores */
+        .tarjeta-ganador {
+            border: 2px solid #166534 !important;
+            background-color: #f0fdf4 !important;
+            box-shadow: 0 4px 10px rgba(22, 101, 52, 0.15);
+        }
+        
+        .tarjeta-ganador .candidato-nombre { color: #166534 !important; }
+        .tarjeta-ganador .barra-llena { background-color: #166534 !important; }
+        
+        .etiqueta-ganador {
+            background-color: #166534;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
         :root {
             --azul-onpe: #003B70;
             --rojo-peru: #D32F2F;
@@ -16,7 +42,7 @@
             margin: 0; 
             padding: 40px 20px;
             min-height: 100vh;
-            background-image: url('fondo-resultados.jpg'); 
+            background-image: url('imagenes/fondo-resultados.jpg');
             background-size: cover; 
             background-position: center; 
             background-attachment: fixed;
@@ -31,7 +57,7 @@
             border-radius: 12px; 
             box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
             width: 100%; 
-            max-width: 700px; 
+            max-width: 800px; 
             border-top: 5px solid var(--azul-onpe);
         }
 
@@ -60,18 +86,60 @@
 
         .btn-back:hover { background-color: #e2e8f0; color: black; }
 
-        /* Estilos de las barras */
-        .partido-fila { margin-bottom: 25px; }
-        .partido-info { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 8px; color: #333; }
-        .barra-fondo { width: 100%; background-color: #e2e8f0; border-radius: 8px; overflow: hidden; height: 24px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);}
-        .barra-llena { background-color: var(--rojo-peru); height: 100%; width: 0%; transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1); }
-        
-        .boton-recargar { 
-            background: var(--azul-onpe); color: white; border: none; padding: 14px; 
-            border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; 
-            margin-top: 20px; font-size: 16px; transition: 0.3s;
+        /* Estilo del Select Desplegable */
+        .filtro-container {
+            margin-bottom: 25px;
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
-        .boton-recargar:hover { background: #002244; }
+
+        .filtro-container label {
+            font-weight: bold;
+            color: var(--azul-onpe);
+        }
+
+        select {
+            flex-grow: 1;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            font-size: 16px;
+            color: #333;
+            outline: none;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        select:focus { border-color: var(--azul-onpe); }
+
+        /* Estilos de las barras y tarjetas */
+        .partido-fila { 
+            margin-bottom: 20px; 
+            background: white; 
+            padding: 15px; 
+            border-radius: 8px; 
+            border: 1px solid #e2e8f0;
+        }
+        
+        .partido-info { 
+            display: flex; 
+            justify-content: space-between; 
+            font-weight: 600; 
+            margin-bottom: 8px; 
+            color: #333; 
+        }
+        
+        .candidato-nombre { font-size: 16px; color: var(--azul-onpe); }
+        .partido-nombre { font-size: 13px; color: #666; font-weight: normal; }
+        
+        .barra-fondo { width: 100%; background-color: #e2e8f0; border-radius: 8px; overflow: hidden; height: 20px; }
+        .barra-llena { background-color: var(--rojo-peru); height: 100%; width: 0%; transition: width 1s ease-out; }
+        
     </style>
 </head>
 <body>
@@ -79,52 +147,100 @@
     <div class="dashboard-card">
         <div class="header-dash">
             <div>
-                <h2>📊 Escrutinio en Vivo</h2>
+                <h2>📊 Escrutinio Oficial</h2>
                 <span style="color: #666; font-size: 14px;">Avance de resultados a nivel nacional</span>
             </div>
             <a href="/" class="btn-back">⬅ Volver al Login</a>
         </div>
 
+        <!-- Nuevo Menú Desplegable -->
+        <div class="filtro-container">
+            <label for="categoriaSelect">Seleccione la Elección:</label>
+            <select id="categoriaSelect" onchange="cargarResultados()">
+                <option value="presidencial">Fórmula Presidencial</option>
+                <option value="senado">Senado de la República</option>
+                <option value="diputados">Cámara de Diputados</option>
+                <option value="andino">Parlamento Andino</option>
+            </select>
+        </div>
+
         <div id="lista-resultados">
             <p style="text-align:center; color:#666;">Cargando actas contabilizadas...</p>
         </div>
-
-        <button class="boton-recargar" onclick="cargarResultados()">🔄 Actualizar Resultados</button>
     </div>
 
     <script>
         async function cargarResultados() {
             const contenedor = document.getElementById('lista-resultados');
+            const categoriaSeleccionada = document.getElementById('categoriaSelect').value;
             
-            try {
-                const respuesta = await fetch('/api/resultados');
-                const datosServidor = await respuesta.json(); // Ahora recibimos un objeto compuesto
-                
-                // Si el servidor dice que estamos en fase 2, cambiamos los títulos visualmente
-                if (datosServidor.fase === 2) {
-                    document.querySelector('.header-dash h2').innerHTML = "🚨 SEGUNDA VUELTA (Balotaje)";
-                    document.querySelector('.header-dash h2').style.color = "#D32F2F";
-                    document.querySelector('.header-dash span').innerHTML = "Resultados exclusivos de los 2 finalistas";
-                }
+            contenedor.innerHTML = '<p style="text-align:center; color:#666;">Calculando resultados oficiales...</p>';
 
-                const datos = datosServidor.escrutinio; // Extraemos el arreglo de votos
+            try {
+                const respuesta = await fetch(`/api/resultados?categoria=${categoriaSeleccionada}`);
+                const datosServidor = await respuesta.json();
+                
                 contenedor.innerHTML = ''; 
                 
-                let totalVotos = datos.reduce((acc, partido) => acc + partido.votos, 0);
+                // Efecto de Títulos si la elección cerró
+                if (datosServidor.eleccionCerrada) {
+                    document.querySelector('.header-dash h2').innerHTML = "🚨 RESULTADOS FINALES";
+                    document.querySelector('.header-dash h2').style.color = "#166534";
+                    document.querySelector('.header-dash span').innerHTML = "Sufragio cerrado al 100% de actas contabilizadas";
+                } else {
+                    document.querySelector('.header-dash h2').innerHTML = "📊 Escrutinio Oficial en Vivo";
+                    document.querySelector('.header-dash h2').style.color = "#003B70";
+                    document.querySelector('.header-dash span').innerHTML = "Avance de resultados a nivel nacional";
+                }
+
+                const datos = datosServidor.escrutinio;
+                let totalVotos = datos.reduce((acc, candidato) => acc + candidato.votos, 0);
 
                 if (totalVotos === 0) {
-                    contenedor.innerHTML = '<p style="text-align:center; color:#666; padding: 20px;">Las urnas están abiertas. Aún no hay votos procesados.</p>';
+                    contenedor.innerHTML = '<p style="text-align:center; color:#666; padding: 20px;">Aún no hay votos procesados en esta categoría.</p>';
                     return;
                 }
 
-                datos.forEach(partido => {
-                    let porcentaje = ((partido.votos / totalVotos) * 100).toFixed(1);
+               // Dibujamos a TODOS los candidatos
+               datos.forEach((candidato, index) => {
+                    let porcentaje = ((candidato.votos / totalVotos) * 100).toFixed(2);
+                    let claseVerde = '';
+                    let etiquetaVerde = '';
+
+                    // Lógica de ganadores (Verde)
+                    if (datosServidor.eleccionCerrada) {
+                        if (categoriaSeleccionada === 'presidencial' && index < 2) {
+                            claseVerde = 'tarjeta-ganador';
+                            etiquetaVerde = '<span class="etiqueta-ganador">PASA A 2DA VUELTA</span>';
+                        } else if (categoriaSeleccionada !== 'presidencial' && index === 0) {
+                            claseVerde = 'tarjeta-ganador';
+                            etiquetaVerde = '<span class="etiqueta-ganador">VIRTUAL GANADOR</span>';
+                        }
+                    }
+
+                    // Lógica de Imagen (Solo presidencial y evitar Voto en Blanco)
+                    let imagenHTML = '';
+                    if (categoriaSeleccionada === 'presidencial' && candidato.nombre !== 'Voto en Blanco') {
+                        // Le agregamos la ruta imagenes/ al inicio
+                        imagenHTML = `<img src="imagenes/${candidato.foto_candidato}" class="perfil-resultado" onerror="this.style.display='none'">`;
+                    }
                     
                     const htmlFila = `
-                        <div class="partido-fila">
+                        <div class="partido-fila ${claseVerde}">
                             <div class="partido-info">
-                                <span>${partido.nombre}</span>
-                                <span>${partido.votos} votos (${porcentaje}%)</span>
+                                <div class="info-agrupada">
+                                    ${imagenHTML}
+                                    <div>
+                                        <div class="candidato-nombre">
+                                            ${candidato.nombre} ${etiquetaVerde}
+                                        </div>
+                                        <div class="partido-nombre">${candidato.partido}</div>
+                                    </div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div><b>${porcentaje}%</b></div>
+                                    <div class="partido-nombre">${candidato.votos.toLocaleString('en-US')} votos</div>
+                                </div>
                             </div>
                             <div class="barra-fondo">
                                 <div class="barra-llena" style="width: ${porcentaje}%;"></div>
@@ -134,11 +250,10 @@
                     contenedor.innerHTML += htmlFila;
                 });
             } catch (error) {
-                contenedor.innerHTML = '<p style="color:red; text-align:center;">Error al conectar con la base de datos de ONPE.</p>';
+                contenedor.innerHTML = '<p style="color:red; text-align:center;">Error al conectar con la base de datos.</p>';
             }
         }
 
-        // Auto-carga al abrir
         cargarResultados();
     </script>
 </body>

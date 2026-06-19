@@ -6,11 +6,8 @@ const path = require('path');
 const app = express();
 app.use(express.json());
 app.use(cors());
-
-// 1. CARPETA PÚBLICA (Aquí viven tus HTML)
 app.use(express.static('public'));
 
-// 2. CONEXIÓN A BASE DE DATOS
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
@@ -20,27 +17,27 @@ const db = mysql.createConnection({
 
 db.connect(err => {
     if (err) throw err;
-    console.log('✅ Motor de Base de Datos conectado exitosamente.');
+    console.log('✅ BD conectada con el nuevo sistema Bicameral.');
 });
 
-// ==========================================
-// 3. RUTAS DE VISTAS (Entregan las pantallas)
-// ==========================================
+// ================= RUTAS DE VISTAS =================
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/votar', (req, res) => res.sendFile(path.join(__dirname, 'public', 'votar.html')));
 app.get('/resultados', (req, res) => res.sendFile(path.join(__dirname, 'public', 'resultados.html')));
 
-// ==========================================
-// 4. RUTAS DE API REST (Procesan los datos)
-// ==========================================
+// ================= RUTAS API REST =================
 
-// API de Login
+// 1. API Login
 app.post('/api/login', (req, res) => {
-    const { dni, nombre, apellido, fecha_emision, digito_verificador } = req.body;
-
-    const horaActual = new Date().getHours(); 
-    if (horaActual < 8 || horaActual >= 23) { 
-        return res.json({ exito: false, mensaje: "⚠️ Las urnas se encuentran cerradas (8 AM - 4 PM)." });
+    const { dni, nombre, apellido, fecha_emision, digito_verificador } = req.body; 
+    // --- MODO DESARROLLO / PRUEBAS ---
+    // Apagamos el reloj real para poder programar de noche
+    // const horaActual = new Date().getHours(); 
+    
+    // Forzamos que el sistema crea que son las 10:00 AM
+    const horaActual = 10;
+    if (horaActual < 8 || horaActual >= 18) { 
+        return res.json({ exito: false, mensaje: "⚠️ Las urnas están cerradas." });
     }
     
     const sql = `SELECT * FROM padron WHERE dni = ? AND nombre = ? AND apellido = ? AND fecha_emision = ? AND digito_verificador = ?`;
@@ -53,55 +50,59 @@ app.post('/api/login', (req, res) => {
     });
 });
 
-// API para Votar
+// 2. API: Cargar Cédulas Dinámicamente por Categoría
+app.get('/api/candidatos', (req, res) => {
+    const categoria = req.query.categoria || 'presidencial';
+    db.query("SELECT id, nombre, partido, foto_candidato FROM candidatos WHERE categoria = ?", [categoria], (err, result) => {
+        if (err) return res.status(500).json({ error: "Error BD" });
+        res.json(result);
+    });
+});
+
+// 3. API: Emitir Voto Múltiple (4 Categorías)
 app.post('/api/emitir-voto', (req, res) => {
-    const { dni, idPartido } = req.body;
+    const { dni, idsVotos } = req.body; // Ahora recibimos un arreglo de 4 IDs
+
     db.beginTransaction(err => {
         if (err) return res.status(500).json({ mensaje: "Error transacción" });
+        
         db.query("UPDATE padron SET estado = 'YA_VOTO' WHERE dni = ? AND estado = 'PENDIENTE'", [dni], (err, result) => {
             if (err || result.affectedRows === 0) return db.rollback(() => res.status(400).json({ exito: false, mensaje: "Voto duplicado bloqueado." }));
-            db.query("UPDATE partidos SET votos = votos + 1 WHERE id = ?", [idPartido], (err, result2) => {
+            
+            // Magia SQL: Usamos "IN (?)" para sumar los votos a los 4 candidatos al mismo tiempo
+            db.query("UPDATE candidatos SET votos = votos + 1 WHERE id IN (?)", [idsVotos], (err, result2) => {
                 if (err) return db.rollback(() => res.status(500).json({ exito: false, mensaje: "Error conteo." }));
+                
                 db.commit(err => {
                     if (err) return db.rollback(() => res.status(500).json({ exito: false, mensaje: "Error commit." }));
-                    res.json({ exito: true, mensaje: "Voto registrado exitosamente." });
+                    res.json({ exito: true, mensaje: "Sufragio procesado exitosamente en las 4 categorías." });
                 });
             });
         });
     });
 });
 
-// API de Resultados (Con Simulador de Segunda Vuelta)
+// 4. API: Escrutinio Dinámico y Resaltado de Ganadores
 app.get('/api/resultados', (req, res) => {
+    const categoria = req.query.categoria || 'presidencial';
     
-    // --- SIMULADOR DE TIEMPO ---
-    // Cambia el "new Date().getHours()" por un número fijo (ej. 17) para forzar la Segunda Vuelta
-    const horaActual = new Date().getHours(); 
+    // --- SIMULADOR DE TIEMPO PARA LA EXPOSICIÓN ---
+    // Si pones 10, es de día y las barras serán rojas normales.
+    // Si pones 17, el sistema asume que terminó el sufragio y pintará a los ganadores de VERDE.
+    const horaActual = 17; 
     
-    let faseEleccion = 1; // Fase 1 normal
-    
-    // Si son las 4 PM (16 hrs) o más, pasamos a Balotaje
-    if (horaActual >= 23) { 
-        faseEleccion = 2; 
-    }
+    // Consultamos a TODOS los candidatos, sin ocultar a nadie
+    let sql = "SELECT nombre, partido, votos, foto_candidato FROM candidatos WHERE categoria = ? ORDER BY votos DESC";
 
-    // Consulta SQL base
-    let sql = "SELECT nombre, votos FROM partidos ORDER BY votos DESC";
-    
-    // Si estamos en Fase 2, le decimos a MySQL que corte a los 2 primeros
-    if (faseEleccion === 2) {
-        sql += " LIMIT 2";
-    }
-
-    db.query(sql, (err, result) => {
+    db.query(sql, [categoria], (err, result) => {
         if (err) return res.status(500).json({ mensaje: "Error al leer escrutinios." });
         
-        // Enviamos al Frontend no solo los votos, sino en qué fase estamos
+        // Enviamos los resultados y avisamos si la elección ya cerró (16 hrs o más)
         res.json({
-            fase: faseEleccion,
+            eleccionCerrada: (horaActual >= 16),
             escrutinio: result
         });
     });
 });
 
-app.listen(3000, () => console.log('🚀 Sistema Electoral (MVC) corriendo en http://localhost:3000'));
+app.listen(3000, () => console.log('🚀 Sistema Electoral corriendo en http://localhost:3000'));
