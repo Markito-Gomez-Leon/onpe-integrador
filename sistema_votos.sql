@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 16-05-2026 a las 02:48:34
+-- Tiempo de generación: 19-05-2026 a las 22:10:40
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -28,8 +28,11 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `padron` (
-  `dni` varchar(8) NOT NULL,
-  `nombre` varchar(100) DEFAULT NULL,
+  `dni` char(8) NOT NULL,
+  `nombre` varchar(50) NOT NULL,
+  `apellido` varchar(50) NOT NULL,
+  `fecha_emision` varchar(10) NOT NULL,
+  `digito_verificador` char(1) NOT NULL,
   `estado` varchar(20) DEFAULT 'PENDIENTE'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -37,19 +40,19 @@ CREATE TABLE `padron` (
 -- Volcado de datos para la tabla `padron`
 --
 
-INSERT INTO `padron` (`dni`, `nombre`, `estado`) VALUES
-('12345678', 'JUAN PEREZ', 'YA_VOTO'),
-('40112233', 'LUIS RAMIREZ FLORES', 'PENDIENTE'),
-('41223344', 'CARMEN CASTRO RUIZ', 'PENDIENTE'),
-('42556677', 'MIGUEL TORRES VARGAS', 'PENDIENTE'),
-('43667788', 'ELENA ROJAS SILVA', 'PENDIENTE'),
-('46990011', 'CARLOS VEGA RIVERA', 'PENDIENTE'),
-('47001122', 'LUCIA MENDOZA SALAS', 'PENDIENTE'),
-('70334455', 'JORGE QUISPE MAMANI', 'PENDIENTE'),
-('71445566', 'ROSA ALVAREZ DIAZ', 'PENDIENTE'),
-('74778899', 'DIEGO NAVARRO CRUZ', 'PENDIENTE'),
-('75889900', 'VALERIA PAREDES LARA', 'PENDIENTE'),
-('87654321', 'MARIA GOMEZ', 'PENDIENTE');
+INSERT INTO `padron` (`dni`, `nombre`, `apellido`, `fecha_emision`, `digito_verificador`, `estado`) VALUES
+('10101010', 'Nombre10', 'Apellido10', '01/01/2001', '1', 'PENDIENTE'),
+('11111111', 'Marco', 'Gomez', '01/01/2001', '1', 'YA_VOTO'),
+('20202020', 'Nombre11', 'Apellido11', '01/01/2001', '1', 'PENDIENTE'),
+('22222222', 'Ariana', 'Torres', '01/01/2001', '1', 'PENDIENTE'),
+('30303030', 'Nombre12', 'Apellido12', '01/01/2001', '1', 'PENDIENTE'),
+('33333333', 'Christian', 'Ramos', '01/01/2001', '1', 'PENDIENTE'),
+('44444444', 'Luis', 'Vargas', '01/01/2001', '1', 'PENDIENTE'),
+('55555555', 'Maria', 'Rojas', '01/01/2001', '1', 'YA_VOTO'),
+('66666666', 'Jorge', 'Perez', '01/01/2001', '1', 'PENDIENTE'),
+('77777777', 'Ana', 'Lopez', '01/01/2001', '1', 'PENDIENTE'),
+('88888888', 'Carlos', 'Mejia', '01/01/2001', '1', 'PENDIENTE'),
+('99999999', 'Elena', 'Castro', '01/01/2001', '1', 'PENDIENTE');
 
 -- --------------------------------------------------------
 
@@ -68,10 +71,11 @@ CREATE TABLE `partidos` (
 --
 
 INSERT INTO `partidos` (`id`, `nombre`, `votos`) VALUES
-(1, 'Partido Integridad', 0),
-(2, 'Fuerza Innovadora', 1),
+(1, 'Partido Integridad', 1),
+(2, 'Fuerza Innovadora', 2),
 (3, 'Alianza Digital', 2),
-(4, 'Unión Verde', 0);
+(4, 'Unión Verde', 1),
+(5, 'Voto en Blanco', 0);
 
 --
 -- Índices para tablas volcadas

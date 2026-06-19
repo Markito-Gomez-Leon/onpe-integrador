@@ -3,41 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sufragio Digital - Login</title>
+    <title>ONPE - Portal del Elector</title>
     <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            margin: 0; 
-            background-image: url('fondo-login.jpg'); 
-            background-size: cover; 
-            background-position: center; 
-            background-attachment: fixed; 
+        /* Estilos Base y Variables Institucionales */
+        :root {
+            --azul-onpe: #003B70;
+            --rojo-peru: #D32F2F;
+            --gris-claro: #F4F6F8;
+            --blanco-translucido: rgba(255, 255, 255, 0.92);
         }
-        .login-box { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; width: 300px; }
-        input { width: 90%; padding: 10px; margin: 15px 0; border: 1px solid #ccc; border-radius: 4px; }
-        button { background: #d32f2f; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; }
-        button:hover { background: #b71c1c; }
-        #resultado { margin-top: 15px; font-weight: bold; font-size: 14px; }
+        
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-image: url('fondo-login.jpg'); /* Debe estar en la carpeta public */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        /* Tarjeta Glassmorphism */
+        .login-card {
+            background: var(--blanco-translucido);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            border-top: 5px solid var(--rojo-peru);
+        }
+
+        .header-onpe h2 {
+            color: var(--azul-onpe);
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+
+        .header-onpe p {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 25px;
+        }
+
+        /* Formulario */
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--azul-onpe);
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 59, 112, 0.2);
+        }
+
+        /* Botones */
+        .btn-primary {
+            background-color: var(--rojo-peru);
+            color: white;
+            border: none;
+            padding: 14px;
+            width: 100%;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-bottom: 15px;
+        }
+
+        .btn-primary:hover {
+            background-color: #b71c1c;
+        }
+
+        .btn-secondary {
+            display: inline-block;
+            background-color: transparent;
+            color: var(--azul-onpe);
+            border: 2px solid var(--azul-onpe);
+            padding: 12px;
+            width: 100%;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            text-decoration: none;
+            box-sizing: border-box;
+            transition: all 0.3s;
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--azul-onpe);
+            color: white;
+        }
+
+        #resultadoDiv {
+            margin-top: 15px;
+            font-weight: bold;
+            font-size: 0.9em;
+            min-height: 20px;
+        }
     </style>
 </head>
 <body>
 
-    <div class="login-box">
-        <h2>ONPE - Validación Multifactor</h2>
-        <p>Ingrese sus datos oficiales para sufragar</p>
-        
+    <div class="login-card">
+        <div class="header-onpe">
+            <h2>Elecciones Generales</h2>
+            <p>Portal de Autenticación del Elector</p>
+        </div>
+
         <input type="text" id="nombreInput" placeholder="Primer Nombre">
-        <input type="text" id="apellidoInput" placeholder="Apellido Paterno o Materno">
-        <input type="text" id="dniInput" placeholder="Número de DNI" maxlength="8">
-        <input type="text" id="fechaEmisionInput" placeholder="Fecha de Emisión (DD/MM/YYYY)" maxlength="10">
-        <input type="text" id="digitoInput" placeholder="Dígito Verificador (-X)" maxlength="1">
+        <input type="text" id="apellidoInput" placeholder="Apellido Paterno">
+        <input type="text" id="dniInput" placeholder="Número de DNI (8 dígitos)" maxlength="8">
+        <input type="date" id="fechaInput" title="Fecha de Emisión">
+        <input type="text" id="digitoInput" placeholder="Dígito Verificador" maxlength="1">
+
+        <button class="btn-primary" onclick="validarIdentidad()">Validar Identidad</button>
         
-        <button onclick="validarIdentidad()">Validar Identidad</button>
-        <div id="resultado"></div>
+        <a href="/resultados" class="btn-secondary">📊 Ver Escrutinio en Vivo</a>
+
+        <div id="resultadoDiv"></div>
     </div>
 
     <script>
@@ -45,20 +142,21 @@
             const nombre = document.getElementById('nombreInput').value.trim();
             const apellido = document.getElementById('apellidoInput').value.trim();
             const dni = document.getElementById('dniInput').value.trim();
-            const fecha_emision = document.getElementById('fechaEmisionInput').value.trim();
+            const fechaRaw = document.getElementById('fechaInput').value; // Sale como YYYY-MM-DD
+            const partes = fechaRaw.split('-');
+            const fecha_emision = partes.length === 3 ? `${partes[2]}/${partes[1]}/${partes[0]}` : ''; // Lo voltea a DD/MM/AAAA
             const digito_verificador = document.getElementById('digitoInput').value.trim();
-            const resultadoDiv = document.getElementById('resultado');
+            const resultadoDiv = document.getElementById('resultadoDiv');
 
-            // VALIDACIÓN POSTAL LOCAL: Campos vacíos
             if (!nombre || !apellido || !dni || !fecha_emision || !digito_verificador) {
-                resultadoDiv.innerHTML = "⚠️ Por favor, complete todos los campos de seguridad.";
+                resultadoDiv.innerHTML = "⚠️ Por favor, complete todos los campos.";
                 resultadoDiv.style.color = "#f57c00";
                 return;
             }
 
             try {
-                // Enviamos los 5 factores de autenticación a la ruta correcta del backend
-                const respuesta = await fetch('http://localhost:3000/validar', {
+                // Aquí el frontend (Vista) llama al Controlador (server.js)
+                const respuesta = await fetch('/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ nombre, apellido, dni, fecha_emision, digito_verificador })
@@ -69,20 +167,14 @@
                 if (datos.exito) {
                     resultadoDiv.innerHTML = `✅ ${datos.mensaje}`;
                     resultadoDiv.style.color = "green";
-                    
-                    // Guardamos el DNI verificado para la cabina secreta
                     localStorage.setItem('dniElector', dni);
-                    
-                    // Redirección automática a la cabina tras 1.5 segundos
-                    setTimeout(() => {
-                        window.location.href = 'votar.html';
-                    }, 1500);
+                    setTimeout(() => window.location.href = '/votar', 1500);
                 } else {
                     resultadoDiv.innerHTML = `❌ ${datos.mensaje}`;
                     resultadoDiv.style.color = "red";
                 }
             } catch (error) {
-                resultadoDiv.innerHTML = "❌ Error de conexión con el servidor de la ONPE.";
+                resultadoDiv.innerHTML = "❌ Error de conexión con el servidor.";
                 resultadoDiv.style.color = "red";
             }
         }

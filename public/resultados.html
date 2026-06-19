@@ -3,69 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Escrutinio - Resultados ONPE</title>
+    <title>Escrutinio Oficial - ONPE</title>
     <style>
+        :root {
+            --azul-onpe: #003B70;
+            --rojo-peru: #D32F2F;
+            --blanco-translucido: rgba(255, 255, 255, 0.95);
+        }
+
         body { 
-            font-family: Arial, sans-serif; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            padding: 40px 20px; 
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif; 
             margin: 0; 
+            padding: 40px 20px;
             min-height: 100vh;
             background-image: url('fondo-resultados.jpg'); 
             background-size: cover; 
             background-position: center; 
             background-attachment: fixed;
+            display: flex;
+            justify-content: center;
         }
-        .dashboard { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
-        .header { text-align: center; border-bottom: 2px solid #005088; padding-bottom: 15px; margin-bottom: 20px; }
-        .header h2 { color: #005088; margin: 0; }
+
+        .dashboard-card { 
+            background: var(--blanco-translucido); 
+            backdrop-filter: blur(10px);
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
+            width: 100%; 
+            max-width: 700px; 
+            border-top: 5px solid var(--azul-onpe);
+        }
+
+        .header-dash { 
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #e2e8f0; 
+            padding-bottom: 15px; 
+            margin-bottom: 25px; 
+        }
+
+        .header-dash h2 { color: var(--azul-onpe); margin: 0; }
         
-        .partido-fila { margin-bottom: 20px; }
-        .partido-info { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 5px; color: #333; }
+        .btn-back {
+            background-color: transparent;
+            color: #666;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: 0.3s;
+        }
+
+        .btn-back:hover { background-color: #e2e8f0; color: black; }
+
+        /* Estilos de las barras */
+        .partido-fila { margin-bottom: 25px; }
+        .partido-info { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 8px; color: #333; }
+        .barra-fondo { width: 100%; background-color: #e2e8f0; border-radius: 8px; overflow: hidden; height: 24px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);}
+        .barra-llena { background-color: var(--rojo-peru); height: 100%; width: 0%; transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1); }
         
-        .barra-fondo { width: 100%; background-color: #e2e8f0; border-radius: 4px; overflow: hidden; height: 20px; }
-        .barra-llena { background-color: #d32f2f; height: 100%; width: 0%; transition: width 1s ease-in-out; }
-        
-        .boton-recargar { background: #005088; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 20px; }
-        .boton-recargar:hover { background: #003d66; }
+        .boton-recargar { 
+            background: var(--azul-onpe); color: white; border: none; padding: 14px; 
+            border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; 
+            margin-top: 20px; font-size: 16px; transition: 0.3s;
+        }
+        .boton-recargar:hover { background: #002244; }
     </style>
 </head>
 <body>
 
-    <div class="dashboard">
-        <div class="header">
-            <h2>📊 Resultados en Tiempo Real</h2>
-            <p>Conteo oficial de votos procesados</p>
+    <div class="dashboard-card">
+        <div class="header-dash">
+            <div>
+                <h2>📊 Escrutinio en Vivo</h2>
+                <span style="color: #666; font-size: 14px;">Avance de resultados a nivel nacional</span>
+            </div>
+            <a href="/" class="btn-back">⬅ Volver al Login</a>
         </div>
 
         <div id="lista-resultados">
-            <p style="text-align:center;">Cargando escrutinio...</p>
+            <p style="text-align:center; color:#666;">Cargando actas contabilizadas...</p>
         </div>
 
         <button class="boton-recargar" onclick="cargarResultados()">🔄 Actualizar Resultados</button>
     </div>
 
     <script>
-        function cargarResultados() {
+        async function cargarResultados() {
             const contenedor = document.getElementById('lista-resultados');
             
-            fetch('http://localhost:3000/resultados')
-            .then(respuesta => respuesta.json())
-            .then(datos => {
-                contenedor.innerHTML = ''; // Limpiamos el texto de "Cargando"
+            try {
+                const respuesta = await fetch('/api/resultados');
+                const datosServidor = await respuesta.json(); // Ahora recibimos un objeto compuesto
                 
-                // Calculamos el total de votos para sacar los porcentajes de la barra
-                let totalVotos = 0;
-                datos.forEach(partido => { totalVotos += partido.votos; });
+                // Si el servidor dice que estamos en fase 2, cambiamos los títulos visualmente
+                if (datosServidor.fase === 2) {
+                    document.querySelector('.header-dash h2').innerHTML = "🚨 SEGUNDA VUELTA (Balotaje)";
+                    document.querySelector('.header-dash h2').style.color = "#D32F2F";
+                    document.querySelector('.header-dash span').innerHTML = "Resultados exclusivos de los 2 finalistas";
+                }
+
+                const datos = datosServidor.escrutinio; // Extraemos el arreglo de votos
+                contenedor.innerHTML = ''; 
+                
+                let totalVotos = datos.reduce((acc, partido) => acc + partido.votos, 0);
 
                 if (totalVotos === 0) {
-                    contenedor.innerHTML = '<p style="text-align:center; color:#666;">Aún no hay votos registrados en el sistema.</p>';
+                    contenedor.innerHTML = '<p style="text-align:center; color:#666; padding: 20px;">Las urnas están abiertas. Aún no hay votos procesados.</p>';
                     return;
                 }
 
-                // Dibujamos cada partido
                 datos.forEach(partido => {
                     let porcentaje = ((partido.votos / totalVotos) * 100).toFixed(1);
                     
@@ -82,13 +133,12 @@
                     `;
                     contenedor.innerHTML += htmlFila;
                 });
-            })
-            .catch(error => {
-                contenedor.innerHTML = '<p style="color:red; text-align:center;">Error al conectar con el servidor.</p>';
-            });
+            } catch (error) {
+                contenedor.innerHTML = '<p style="color:red; text-align:center;">Error al conectar con la base de datos de ONPE.</p>';
+            }
         }
 
-        // Cargar los datos automáticamente al abrir la página
+        // Auto-carga al abrir
         cargarResultados();
     </script>
 </body>

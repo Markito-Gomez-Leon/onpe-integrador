@@ -5,181 +5,249 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cédula de Sufragio - ONPE</title>
     <style>
+        :root {
+            --azul-onpe: #003B70;
+            --rojo-peru: #D32F2F;
+            --blanco-translucido: rgba(255, 255, 255, 0.95);
+        }
+
         body { 
-            font-family: Arial, sans-serif; 
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif; 
             margin: 0; 
             padding: 20px; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
             min-height: 100vh;
-            background-image: url('fondo-votar.jpg'); 
+            background-image: url('fondo-votar.jpg'); /* En tu carpeta public */
             background-size: cover; 
             background-position: center; 
             background-attachment: fixed;
         }
-        .header { background-color: #005088; color: white; padding: 20px; border-radius: 8px; width: 100%; max-width: 600px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .header h2 { margin: 0; font-size: 24px; }
-        .header p { margin: 5px 0 0 0; font-size: 14px; opacity: 0.9; }
+
+        /* Contenedor Principal (Glassmorphism) */
+        .votar-card {
+            background: var(--blanco-translucido);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 700px;
+            border-top: 5px solid var(--azul-onpe);
+        }
+
+        /* Cabecera y Botón de Salida */
+        .header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 2px solid #e2e8f0; 
+            padding-bottom: 15px; 
+            margin-bottom: 20px; 
+        }
+        .header-titulos h2 { margin: 0; color: var(--azul-onpe); font-size: 22px; }
+        .header-titulos p { margin: 5px 0 0 0; color: #666; font-size: 14px; }
         
-        .grid-cedula { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 600px; }
+        .btn-salir {
+            background-color: transparent;
+            color: var(--rojo-peru);
+            border: 1px solid var(--rojo-peru);
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            text-decoration: none;
+        }
+        .btn-salir:hover { background-color: var(--rojo-peru); color: white; }
+
+        /* Cédula y Tarjetas */
+        .grid-cedula { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 15px; 
+            width: 100%; 
+        }
         
-        .tarjeta-partido { background: white; border: 2px solid #cbd5e1; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .tarjeta-partido:hover { border-color: #005088; background-color: #f0f7ff; }
-        .simbolo { width: 60px; height: 60px; border-radius: 50%; display: inline-flex; justify-content: center; align-items: center; color: white; font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+        .tarjeta-partido { 
+            background: white; 
+            border: 2px solid #cbd5e1; 
+            border-radius: 8px; 
+            padding: 20px; 
+            text-align: center; 
+            cursor: pointer; 
+            transition: all 0.2s ease-in-out; 
+        }
+        .tarjeta-partido:hover { 
+            border-color: var(--azul-onpe); 
+            background-color: #f0f7ff; 
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 59, 112, 0.15);
+        }
+
+        .simbolo { 
+            width: 60px; height: 60px; 
+            border-radius: 50%; 
+            display: inline-flex; 
+            justify-content: center; 
+            align-items: center; 
+            color: white; 
+            font-size: 24px; 
+            font-weight: bold; 
+            margin-bottom: 10px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
         
         .bg-rojo { background-color: #d32f2f; }
         .bg-gris { background-color: #94a3b8; }
         .bg-naranja { background-color: #f57c00; }
         .bg-azul { background-color: #1976d2; }
         .bg-verde { background-color: #388e3c; }
-
         .nombre-partido { font-weight: bold; color: #333; font-size: 16px; }
         
-        #mensaje-confirmacion { margin-top: 20px; padding: 15px; border-radius: 5px; width: 100%; max-width: 600px; text-align: center; font-weight: bold; display: none; }
-        .alerta-exito { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        /* Mensajes y Recibo */
+        #mensaje-confirmacion { 
+            margin-top: 20px; padding: 20px; border-radius: 8px; 
+            text-align: center; display: none; 
+        }
+        .alerta-exito { background-color: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
         
-        /* Configuración exclusiva para la impresión del PDF (HU-12) - Forzar 1 sola hoja */
+        .btn-imprimir { 
+            background: #166534; color: white; border: none; padding: 14px; 
+            border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; 
+            margin-top: 15px; font-size: 16px; transition: 0.3s; display: none;
+        }
+        .btn-imprimir:hover { background: #14532d; }
+
+        /* Estilos de Impresión Oficial (HU-12) */
         @media print {
-            html, body { 
-                height: auto !important; 
-                min-height: 0 !important; 
-                margin: 0 !important; 
-                padding: 0 !important; 
-                background-image: none !important; 
-                background-color: white !important; 
-            }
+            body { background: white !important; padding: 0 !important; }
+            .votar-card { border: none !important; box-shadow: none !important; margin: 0 !important; width: 100% !important; max-width: 100% !important; }
+            .header, .grid-cedula, .btn-imprimir { display: none !important; }
             
-            @page {
-                size: A4;
-                margin: 15mm 10mm; /* Define márgenes de página fijos y compactos */
-            }
-
-            .header { 
-                background-color: transparent !important; 
-                color: black !important; 
-                border-bottom: 2px solid black !important; 
-                box-shadow: none !important; 
-                margin-bottom: 15px !important;
-                padding: 10px !important;
-            }
-
-            /* Ocultamos por completo la cédula y los botones para que no ocupen espacio */
-            #btn-imprimir, .tarjeta-partido, .grid-cedula { 
-                display: none !important; 
-            }
-
-            /* Estilizamos el recibo para que actúe como un documento oficial e indivisible */
             #mensaje-confirmacion { 
                 background-color: white !important; 
                 color: black !important; 
-                border: 2px dashed black !important; 
-                padding: 15px !important;
-                margin: 10px auto !important;
-                box-shadow: none !important;
+                border: 2px solid black !important; 
+                padding: 30px !important;
+                margin: 0 auto !important;
                 display: block !important;
-                max-width: 100% !important;
-                page-break-inside: avoid; /* Evita estrictamente que el cuadro se fracture entre páginas */
+                width: 80% !important;
+            }
+            .sello-agua {
+                position: absolute; top: 50%; left: 50%;
+                transform: translate(-50%, -50%) rotate(-45deg);
+                font-size: 80px; color: rgba(0,0,0,0.05); font-weight: bold; z-index: -1;
             }
         }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h2>ELECCIONES PRESIDENCIALES</h2>
-        <p>Seleccione el símbolo de su preferencia</p>
-    </div>
-
-    <div class="grid-cedula" id="cedula">
-        <div class="tarjeta-partido" onclick="emitirVoto(1, 'Partido Integridad')">
-            <div class="simbolo bg-rojo">I</div>
-            <div class="nombre-partido">Partido Integridad</div>
+    <div class="votar-card">
+        <div class="header" id="cabecera-voto">
+            <div class="header-titulos">
+                <h2>Cédula Digital</h2>
+                <p>Elecciones Presidenciales</p>
+            </div>
+            <button class="btn-salir" onclick="cerrarSesion()">Salir / Abortar</button>
         </div>
+
+        <div class="grid-cedula" id="cedula">
+            <div class="tarjeta-partido" onclick="emitirVoto(1, 'Partido Integridad')">
+                <div class="simbolo bg-rojo">I</div>
+                <div class="nombre-partido">Partido Integridad</div>
+            </div>
+            <div class="tarjeta-partido" onclick="emitirVoto(2, 'Fuerza Innovadora')">
+                <div class="simbolo bg-naranja">F</div>
+                <div class="nombre-partido">Fuerza Innovadora</div>
+            </div>
+            <div class="tarjeta-partido" onclick="emitirVoto(3, 'Alianza Digital')">
+                <div class="simbolo bg-azul">A</div>
+                <div class="nombre-partido">Alianza Digital</div>
+            </div>
+            <div class="tarjeta-partido" onclick="emitirVoto(4, 'Unión Verde')">
+                <div class="simbolo bg-verde">V</div>
+                <div class="nombre-partido">Unión Verde</div>
+            </div>
+            <div class="tarjeta-partido" onclick="emitirVoto(5, 'Voto en Blanco')">
+                <div class="simbolo bg-gris">⬜</div>
+                <div class="nombre-partido">Voto en Blanco</div>
+            </div>
+        </div>
+
+        <div id="mensaje-confirmacion"></div>
         
-        <div class="tarjeta-partido" onclick="emitirVoto(2, 'Fuerza Innovadora')">
-            <div class="simbolo bg-naranja">F</div>
-            <div class="nombre-partido">Fuerza Innovadora</div>
-        </div>
-
-        <div class="tarjeta-partido" onclick="emitirVoto(3, 'Alianza Digital')">
-            <div class="simbolo bg-azul">A</div>
-            <div class="nombre-partido">Alianza Digital</div>
-        </div>
-
-        <div class="tarjeta-partido" onclick="emitirVoto(4, 'Unión Verde')">
-            <div class="simbolo bg-verde">V</div>
-            <div class="nombre-partido">Unión Verde</div>
-        </div>
-
-        <div class="tarjeta-partido" onclick="emitirVoto(5, 'Voto en Blanco')">
-            <div class="simbolo bg-gris">⬜</div>
-            <div class="nombre-partido">Voto en Blanco</div>
-        </div>
-        
+        <button id="btn-imprimir" class="btn-imprimir" onclick="window.print()">
+            🖨️ Descargar Constancia (PDF)
+        </button>
     </div>
-
-    </div> <div id="mensaje-confirmacion"></div>
-            
-    <button id="btn-imprimir" class="boton-recargar" style="display: none; background-color: #388e3c; margin-top: 15px;" onclick="window.print()">
-        🖨️ Descargar Constancia de Sufragio (PDF)
-    </button>
 
     <script>
-        // 1. Apenas carga la página, recuperamos el DNI del elector
         const dniRecuperado = localStorage.getItem('dniElector');
 
-        // 2. Seguridad: Si alguien intenta entrar directo a votar.html sin loguearse, lo botamos
         if (!dniRecuperado) {
-            alert("Acceso denegado. Primero debe validar su identidad.");
-            window.location.href = 'index.html';
+            window.location.href = '/';
         }
 
-        function emitirVoto(idPartido, nombrePartido) {
-            const confirmacion = confirm(`¿Está seguro de emitir su voto por el ${nombrePartido}? Esta acción es irreversible.`);
+        function cerrarSesion() {
+            if(confirm("¿Desea salir de la cabina de votación? Su sesión será cerrada.")) {
+                localStorage.removeItem('dniElector');
+                window.location.href = '/';
+            }
+        }
+
+        async function emitirVoto(idPartido, nombrePartido) {
+            const confirmacion = confirm(`¿Está seguro de emitir su voto por: ${nombrePartido}?\nEsta acción es irreversible y finalizará su proceso electoral.`);
             
             if (confirmacion) {
-                // 3. Usamos el DNI real que vino del Login
-                const datosVoto = {
-                    dni: dniRecuperado, 
-                    idPartido: idPartido
-                };
+                const datosVoto = { dni: dniRecuperado, idPartido: idPartido };
 
-                fetch('http://localhost:3000/emitir-voto', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(datosVoto)
-                })
-                .then(respuesta => respuesta.json())
-                .then(datos => {
+                try {
+                    // LLAMADA AL CONTROLADOR MVC
+                    const respuesta = await fetch('/api/emitir-voto', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(datosVoto)
+                    });
+                    
+                    const datos = await respuesta.json();
+
                     if(datos.exito) {
                         document.getElementById('cedula').style.display = 'none';
+                        document.getElementById('cabecera-voto').style.display = 'none';
                         
-                        // Capturamos fecha y hora actual
                         const fechaActual = new Date().toLocaleString('es-PE');
                         
-                        // Armamos el recibo oficial
                         const msj = document.getElementById('mensaje-confirmacion');
                         msj.style.display = 'block';
                         msj.className = 'alerta-exito';
+                        
+                        // Diseño de Constancia Oficial
                         msj.innerHTML = `
-                            <h3>✅ Sufragio Exitoso</h3>
+                            <div class="sello-agua">ONPE</div>
+                            <h3 style="margin-top:0; color:#003B70;">CONSTANCIA DE SUFRAGIO ELECTRÓNICO</h3>
                             <p>${datos.mensaje}</p>
-                            <hr style="border-top: 1px solid #c3e6cb;">
-                            <p align="left"><b>DNI del Elector:</b> ${dniRecuperado}</p>
-                            <p align="left"><b>Fecha y Hora:</b> ${fechaActual}</p>
-                            <p align="left"><b>Estado:</b> REGISTRADO EN ONPE</p>
+                            <hr style="border-top: 1px solid #ccc; margin: 20px 0;">
+                            <div style="text-align: left; line-height: 1.8;">
+                                <b>DNI del Elector:</b> ${dniRecuperado}<br>
+                                <b>Fecha de Transacción:</b> ${fechaActual}<br>
+                                <b>Identificador de Red:</b> Node.js (Servidor Local)<br>
+                                <b>Estado:</b> PROCESADO Y ENCRIPTADO
+                            </div>
+                            <hr style="border-top: 1px dashed #ccc; margin: 20px 0;">
+                            <p style="font-size: 12px; color: #666;">Este documento certifica su participación ciudadana.</p>
                         `;
                         
-                        // Mostramos el botón de imprimir
                         document.getElementById('btn-imprimir').style.display = 'block';
-                        
-                        // Limpiamos la memoria
                         localStorage.removeItem('dniElector');
                     } else {
                         alert(datos.mensaje); 
                     }
-                });
+                } catch (error) {
+                    alert("Error crítico conectando con el servidor transaccional.");
+                }
             }
         }
     </script>
